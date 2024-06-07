@@ -69,5 +69,66 @@
         </div>
       </form>
     </div>
+
+    <!-- Script to show PDF and make interactable -->
+    <script type="text/javascript">
+      const url = "test.pdf";
+
+      const loadPdf = async (url) => {
+        const loadingTask = pdfjsLib.getDocument(url);
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        const scale = 1.5;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.getElementById("pdf-canvas");
+        const context = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport,
+        };
+        await page.render(renderContext).promise;
+
+        // Get annotations (form fields)
+        const annotations = await page.getAnnotations();
+
+        // Add annotations to page
+        annotations.forEach((annotation) => {
+          console.log(annotation.rect);
+          if (
+            annotation.subtype === "Widget" &&
+            annotation.fieldType === "Tx"
+          ) {
+            // Bottom left point: [0, 2] ??
+            // Top right point: [2, 3] ??
+            // 0: left
+            const input = document.createElement("input");
+            input.id = annotation.fieldName;
+            input.name = annotation.fieldName;
+            input.type = "text";
+            input.required = false;
+            input.style.position = "absolute";
+            input.style.left = `${annotation.rect[0] * scale}px`;
+            // Top: 3 - 1
+            input.style.top = `${
+              (780 - annotation.rect[1]) * (scale * 0.96)
+            }px`;
+            input.style.width = `${
+              (annotation.rect[2] - annotation.rect[0]) * scale
+            }px`;
+            input.style.height = `${
+              (annotation.rect[3] - annotation.rect[1]) * scale
+            }px`;
+
+            document.getElementById("pdf-container").appendChild(input);
+          }
+        });
+      };
+
+      loadPdf(url);
+    </script>
   </body>
 </html>
