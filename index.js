@@ -37,7 +37,6 @@ const transporter = nodemailer.createTransport({
 // GOOGLE SMTP METHOD
 app.post("/send-pdf", cors(corsOptions), (req, res) => {
 
-  console.log(corsOptions);
   const { pdf, to, subject, body, assignment_name, student_name } = req.body;
 
   // Setup email data
