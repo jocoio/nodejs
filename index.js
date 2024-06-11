@@ -1,14 +1,13 @@
 const express = require("express");
 const nodemailer = require("nodemailer");
-
+const cors = require("cors");
 const path = require("path");
 let app = express();
 
 const port = process.env.PORT || 3000;
 
-// const log = function(entry) {
-//     fs.appendFileSync('/tmp/sample-app.log', new Date().toISOString() + ' - ' + entry + '\n');
-// };
+// Set up CORS
+app.use(cors());
 
 // Middleware to parse JSON requests
 app.use(express.json({ limit: "50mb" }));
@@ -22,42 +21,45 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// const server = http.createServer(function (req, res) {
-//   if (req.method === "POST") {
-//     let body = "";
+// Create a transporter object using the default SMTP transport
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "j.corbett@rowan.nyc",
+    pass: "xozpuf-zinki3-Wymneh", // Use App Password if 2-Step Verification is enabled
+  },
+});
 
-//     req.on("data", function (chunk) {
-//       body += chunk;
-//     });
+// GOOGLE SMTP METHOD
+app.post("/send-pdf", (req, res) => {
+  const { pdf, to } = req.body;
 
-//     req.on("end", function () {
-//       if (req.url === "/") {
-//         log("Received a message.");
-//       } else if ((req.url = "/scheduled")) {
-//         log(
-//           "Received task " +
-//             req.headers["x-aws-sqsd-taskname"] +
-//             " scheduled at " +
-//             req.headers["x-aws-sqsd-scheduled-at"]
-//         );
-//       }
+  // Setup email data
+  const mailOptions = {
+    to,
+    subject: "RS-101 Submission: {student-name}",
+    text: "Attached is a student submission for the {assignment-name} assignment in RS-101.",
+    attachments: [
+      {
+        filename: "sumission-{assignment-name}.pdf",
+        contentType: "application/pdf",
+        content: pdf,
+        encoding: "base64",
+      },
+    ],
+  };
 
-//       res.writeHead(200, "OK", { "Content-Type": "text/plain" });
-//       res.end();
-//     });
-//   } else {
-//     res.writeHead(200);
-//     res.write(html);
-//     res.end();
-//   }
-// });
-
-// Listen on port 3000, IP defaults to 127.0.0.1
-// server.listen(port);
+  // Send email
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(500).json({ error: error.toString() });
+    }
+    res.status(200).json({ message: "Email sent", messageId: info.messageId });
+  });
+});
 
 // Start the server
 app.listen(port, () => {
   // Put a friendly message on the terminal
   console.log(`Server is running at http://localhost:${port}`);
-  console.log("Server running at http://127.0.0.1:" + port + "/");
 });
