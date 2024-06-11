@@ -7,7 +7,11 @@ let app = express();
 const port = process.env.PORT || 3000;
 
 // Set up CORS
-app.use(cors());
+var corsOptions = {
+  origin: [/\.rowan\.nyc$/gm, /https?:\/\/127.0.0.1:[^\s]*/gm],
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+app.use(cors(corsOptions));
 
 // Middleware to parse JSON requests
 app.use(express.json({ limit: "50mb" }));
@@ -31,17 +35,19 @@ const transporter = nodemailer.createTransport({
 });
 
 // GOOGLE SMTP METHOD
-app.post("/send-pdf", (req, res) => {
-  const { pdf, to } = req.body;
+app.post("/send-pdf", cors(corsOptions), (req, res) => {
+
+  console.log(corsOptions);
+  const { pdf, to, subject, body, assignment_name, student_name } = req.body;
 
   // Setup email data
   const mailOptions = {
     to,
-    subject: "RS-101 Submission: {student-name}",
-    text: "Attached is a student submission for the {assignment-name} assignment in RS-101.",
+    subject,
+    text: body,
     attachments: [
       {
-        filename: "sumission-{assignment-name}.pdf",
+        filename: `sumission-${assignment_name}-${student_name}.pdf`,
         contentType: "application/pdf",
         content: pdf,
         encoding: "base64",

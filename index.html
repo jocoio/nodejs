@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <!-- Demo experience that lives at / on the server -->
 <html>
@@ -168,7 +167,14 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ pdf: pdfBytes, to: "j.corbett@rowan.nyc" }),
+          body: JSON.stringify({
+            pdf: pdfBytes,
+            to: "j.corbett@rowan.nyc",
+            subject: "PDF Emailer Test Email",
+            body: "This is just a test email. disregard.",
+            assignment_name: "Demo Assignment",
+            student_name: "Cadet Kelly",
+          }),
         });
 
         const result = await response.text();
